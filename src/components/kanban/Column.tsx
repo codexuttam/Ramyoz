@@ -2,88 +2,105 @@
 
 import { Status, Task } from '@/types';
 import Card from './Card';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MoreVertical } from 'lucide-react';
+import { Plus, MoreVertical, Layers } from 'lucide-react';
+import SortableCard from './SortableCard';
 
 interface ColumnProps {
   status: Status;
   tasks: Task[];
   onAddTask: (status: Status) => void;
   onEditTask: (task: Task) => void;
+  setIsModalOpen: (open: boolean) => void;
 }
 
 const statusConfig = {
   pending: {
     title: 'Pending',
-    color: 'border-slate-800/50',
-    dot: 'bg-slate-400',
-    headerBg: 'bg-slate-500/10'
+    color: 'text-slate-500',
+    dot: 'bg-slate-500',
+    headerBg: 'bg-slate-500/5',
+    accent: 'bg-slate-500/20'
   },
   'in-progress': {
     title: 'In Progress',
-    color: 'border-primary/50',
-    dot: 'bg-primary shadow-[0_0_8px_rgba(139,92,246,0.5)]',
-    headerBg: 'bg-primary/10'
+    color: 'text-primary',
+    dot: 'bg-primary shadow-[0_0_15px_rgba(139,92,246,0.6)]',
+    headerBg: 'bg-primary/5',
+    accent: 'bg-primary/20'
   },
   completed: {
     title: 'Completed',
-    color: 'border-green-500/50',
-    dot: 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]',
-    headerBg: 'bg-green-500/10'
+    color: 'text-green-500',
+    dot: 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]',
+    headerBg: 'bg-green-500/5',
+    accent: 'bg-green-500/20'
   }
 };
 
-export default function Column({ status, tasks, onAddTask, onEditTask }: ColumnProps) {
+export default function Column({ status, tasks, onAddTask, onEditTask, setIsModalOpen }: ColumnProps) {
   const config = statusConfig[status];
+  const { setNodeRef } = useDroppable({
+    id: status,
+    data: {
+      type: 'Column',
+    },
+  });
 
   return (
-    <div className={`flex flex-col w-full md:w-80 h-[calc(100vh-12rem)] flex-shrink-0`}>
-      <div className={`flex items-center justify-between p-4 mb-3 rounded-2xl ${config.headerBg} border border-white/5`}>
-        <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full ${config.dot}`} />
-          <h2 className="font-bold text-slate-100 tracking-tight flex items-center gap-2">
+    <div className="flex flex-col w-full md:w-[380px] h-[calc(100vh-18rem)] flex-shrink-0 group">
+      <div className={`flex items-center justify-between p-6 mb-6 rounded-3xl ${config.headerBg} border border-white/5 backdrop-blur-md group-hover:border-white/10 transition-all`}>
+        <div className="flex items-center gap-4">
+          <div className={`w-2.5 h-2.5 rounded-full ${config.dot}`} />
+          <h2 className={`font-black uppercase tracking-[0.2em] text-xs ${config.color} flex items-center gap-3`}>
             {config.title}
-            <span className="text-xs font-medium text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/5">
               {tasks.length}
             </span>
           </h2>
         </div>
-        <div className="flex items-center gap-1">
+        
+        <div className="flex items-center gap-2">
           {status === 'pending' && (
             <button
               onClick={() => onAddTask(status)}
-              className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-all"
+              className="p-2 hover:bg-white/10 rounded-xl text-slate-500 hover:text-white transition-all transform hover:rotate-90"
             >
-              <Plus size={18} />
+              <Plus size={20} />
             </button>
           )}
-          <button className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400">
-            <MoreVertical size={16} />
+          <button className="p-2 hover:bg-white/10 rounded-xl text-slate-500">
+            <MoreVertical size={18} />
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 custom-scrollbar">
-        <div className="flex flex-col gap-1 min-h-[100px]">
+      <div 
+        ref={setNodeRef}
+        className="flex-1 overflow-y-auto px-2 custom-scrollbar space-y-4"
+      >
+        <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
           <AnimatePresence mode="popLayout">
             {tasks.length > 0 ? (
               tasks.map((task) => (
-                <Card key={task.id} task={task} onEdit={onEditTask} />
+                <SortableCard key={task.id} task={task} onEdit={onEditTask} />
               ))
             ) : (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-white/5 rounded-2xl"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-white/5 rounded-[2.5rem] bg-white/[0.01]"
               >
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-2">
-                  <Plus className="text-slate-600" size={20} />
+                <div className={`w-14 h-14 rounded-2xl ${config.accent} flex items-center justify-center mb-4 text-slate-600`}>
+                  <Layers size={24} />
                 </div>
-                <p className="text-xs font-medium text-slate-600">No tasks here</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-700">Empty Orbit</p>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </SortableContext>
       </div>
     </div>
   );

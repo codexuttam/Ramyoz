@@ -12,6 +12,7 @@ interface KanbanState {
   moveTask: (id: string, status: Status) => void;
   setSearchTerm: (term: string) => void;
   reorderTasks: (newTasks: Task[]) => void;
+  clearCompleted: () => void;
 }
 
 export const useKanbanStore = create<KanbanState>()(
@@ -48,9 +49,13 @@ export const useKanbanStore = create<KanbanState>()(
         })),
       setSearchTerm: (searchTerm) => set({ searchTerm }),
       reorderTasks: (newTasks) => set({ tasks: newTasks }),
+      clearCompleted: () =>
+        set((state) => ({
+          tasks: state.tasks.filter((task) => task.status !== 'completed'),
+        })),
     }),
     {
-      name: 'kanban-storage',
+      name: 'kanban-storage-v2', // Updated key for potential migration
     }
   )
 );
